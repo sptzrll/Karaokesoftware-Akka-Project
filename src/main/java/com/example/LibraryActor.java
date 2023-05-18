@@ -37,13 +37,23 @@ public class LibraryActor extends AbstractBehavior<LibraryActor.Message> {
 
     private LibraryActor(ActorContext<Message> context) {
         super(context);
-        //мы переделаем на свое потом на json
-//        songs = new ArrayList<Song>();
 
         songs = new ArrayList<>();
-        songs.add(new Song("Artist1", "Song1", 8));
-        songs.add(new Song("Artist1", "Song2", 6));
-        songs.add(new Song("Artist2", "Song3", 10));
+        songs.add(new Song("Drake", "Forever", 12));
+        songs.add(new Song("Drake", "Headlines", 7));
+        songs.add(new Song("Drake", "Best I Ever Had", 9));
+
+        songs.add(new Song("Bad Bunny", "Diles", 10));
+        songs.add(new Song("Bad Bunny", "Soy Peor", 9));
+        songs.add(new Song("Bad Bunny", "I Like It", 18));
+
+        songs.add(new Song("Ed Sheeran", "Thinking Out Loud", 10));
+        songs.add(new Song("Ed Sheeran", "Perfect", 9));
+        songs.add(new Song("Ed Sheeran", "Photograph", 9));
+
+        songs.add(new Song("Taylor Swift", "Shake it off", 7));
+        songs.add(new Song("Taylor Swift", "Love Story", 8));
+        songs.add(new Song("Taylor Swift", "Blank Space", 8));
     }
 
 

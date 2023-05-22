@@ -25,14 +25,14 @@ public class AkkaMainSystem extends AbstractBehavior<AkkaMainSystem.Create> {
     private Behavior<Create> onCreate(Create command) {
         //#create-actors
         ActorRef<LibraryActor.Message> library = this.getContext().spawn(LibraryActor.create(), "library");
-        ActorRef<SpawnerActor.Message> spawner = this.getContext().spawn(SpawnerActor.create(), "spawner");
-        ActorRef<PlaybackClientActor.Message> playbackClient = this.getContext().spawn(PlaybackClientActor.create(), "playbackClient");
         ActorRef<QueueManagerActor.Message> queueManager = this.getContext().spawn(QueueManagerActor.create(), "queueManager");
+        ActorRef<PlaybackClientActor.Message> playbackClient = this.getContext().spawn(PlaybackClientActor.create(queueManager), "playbackClient");
+        ActorRef<SpawnerActor.Message> spawner = this.getContext().spawn(SpawnerActor.create(queueManager, library, playbackClient), "spawner");
         //#create-actors
 
-        library.tell(new LibraryActor.CreateMessage(this.getContext().getSelf()));
-//        a.tell(new ExampleActor.ExampleMessage(this.getContext().getSelf(),"Test123"));
-//        b.tell(new ExampleTimerActor.ExampleMessage("TestB"));
+        library.tell(new LibraryActor.Start(this.getContext().getSelf(), playbackClient));
+        queueManager.tell(new QueueManagerActor.StartMessage(playbackClient));
+
         return this;
     }
 }

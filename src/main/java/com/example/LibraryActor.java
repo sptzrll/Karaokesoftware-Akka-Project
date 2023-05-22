@@ -9,31 +9,17 @@ import java.util.List;
 
 public class LibraryActor extends AbstractBehavior<LibraryActor.Message> {
 
-    private List<Song> songs;
+    private final List<Song> songs;
 
+    public interface Message { }
 
-    public interface Message {
-    }
-
-    public static class GetSongsMessage implements Message {
-        public final String name;
-
-        public GetSongsMessage(String name) {
-            this.name = name;
-        }
-    }
-
-    public static class ListArtistsMessage implements Message {
-    }
-
-
-    public record CreateMessage(ActorRef<AkkaMainSystem.Create> someReference) implements Message {
-    }
+    public record Start(ActorRef<AkkaMainSystem.Create> akkaMainSystem, ActorRef<PlaybackClientActor.Message> playback) implements Message {}
+    public record GetSongsMessage(ActorRef<KaraokeSingerActor.Message> singer, String artistName, int singerNumber) implements Message, KaraokeSingerActor.Message { }
+    public record ListArtistsMessage(ActorRef<KaraokeSingerActor.Message> singer, int singerNumber) implements Message{}
 
     public static Behavior<Message> create() {
-        return Behaviors.setup(context -> new LibraryActor(context));
+        return Behaviors.setup(LibraryActor::new);
     }
-
 
     private LibraryActor(ActorContext<Message> context) {
         super(context);
@@ -56,41 +42,44 @@ public class LibraryActor extends AbstractBehavior<LibraryActor.Message> {
         songs.add(new Song("Taylor Swift", "Blank Space", 8));
     }
 
-
     @Override
     public Receive<Message> createReceive() {
         return newReceiveBuilder()
+                .onMessage(Start.class, this::onStart)
                 .onMessage(GetSongsMessage.class, this::onGetSongsMessage)
                 .onMessage(ListArtistsMessage.class, this::onListArtistsMessage)
                 .build();
     }
 
-
-    private Behavior<Message> onGetSongsMessage(GetSongsMessage msg) {
-        StringBuilder str = new StringBuilder("Artist " + msg.name + " wrote songs: ");
-        for (int i = 0; i < songs.size(); i++) {
-            if (songs.get(i).getArtistName().equals(msg.name)){
-                if (i == songs.size() - 1){
-                    str.append(songs.get(i).getTitle()).append(".");
-                }else{
-                    str.append(songs.get(i).getTitle()).append(", ");
-                }
-            }
-        }
-        this.getContext().getLog().info("{}", str);
+    private Behavior<Message> onStart(Start msg) {
+        msg.playback.tell(new PlaybackClientActor.GetList(songs));
         return this;
     }
 
     private Behavior<Message> onListArtistsMessage(ListArtistsMessage msg) {
-        StringBuilder str = new StringBuilder("Artists: ");
-        for (int i = 0; i < songs.size(); i++) {
-            if (i == songs.size() - 1){
-                str.append(songs.get(i).getArtistName()).append(".");
-            }else{
-                str.append(songs.get(i).getArtistName()).append(", ");
+        ArrayList<String> artistsList = new ArrayList<>();
+
+        for (Song song : songs) {
+            if (!artistsList.contains(song.getArtistName())) {
+                artistsList.add(song.getArtistName());
             }
         }
-        this.getContext().getLog().info("{}", str);
+
+        msg.singer.tell(new KaraokeSingerActor.ArtistsMessage(artistsList));
+        this.getContext().getLog().info(String.format("Library sent artistList to Singer %d: %s", msg.singerNumber, artistsList));
+        return this;
+    }
+
+    private Behavior<Message> onGetSongsMessage(GetSongsMessage msg) {
+        ArrayList<String> songsList = new ArrayList<>();
+
+        for (Song song: songs) {
+            if (song.getArtistName().equals(msg.artistName)) {
+                songsList.add(song.getTitle());
+            }
+        }
+        msg.singer.tell(new KaraokeSingerActor.SongsMessage(songsList));
+        this.getContext().getLog().info(String.format("Library sent songsList to Singer :%s", songsList));
         return this;
     }
 }

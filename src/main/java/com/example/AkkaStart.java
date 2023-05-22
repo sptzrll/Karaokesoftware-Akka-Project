@@ -4,8 +4,10 @@ import akka.actor.typed.ActorSystem;
 
 import java.io.IOException;
 public class AkkaStart {
+  //#actor-system
   public static void main(String[] args) {
     final ActorSystem<AkkaMainSystem.Create> messageMain = ActorSystem.create(AkkaMainSystem.create(), "akkaMainSystem");
+  //#actor-system
 
     messageMain.tell(new AkkaMainSystem.Create());
 

@@ -1,52 +1,68 @@
 package com.example;
 
+import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.*;
 
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedList;
+import java.util.Queue;
 
 
 public class QueueManagerActor extends AbstractBehavior<QueueManagerActor.Message> {
 
-    private List<Song> wiedergabe;
-    public interface Message {};
-
-    public static class ReadyMessage implements QueueManagerActor.Message {
-    }
-    public static class AddMessage implements QueueManagerActor.Message {
-    }
+    private Queue<String> playlist;
+    private Queue<ActorRef<KaraokeSingerActor.Message>> singers;
+    private ActorRef<PlaybackClientActor.Message> playback;
 
 
-    public record ExampleMessage(String someString) implements Message {  }
+    public interface Message { }
+
+    public record StartMessage(ActorRef<PlaybackClientActor.Message> playback) implements Message {}
+    public record ReadyMessage(String string) implements Message { }
+    public record AddMessage(ActorRef<KaraokeSingerActor.Message> singer, String songName, int singerNumber) implements Message { }
 
     public static Behavior<Message> create() {
-        return Behaviors.setup(context -> Behaviors.withTimers(timers -> new QueueManagerActor(context, timers)));
+        return Behaviors.setup(QueueManagerActor::new);
     }
 
-
-    private QueueManagerActor(ActorContext<Message> context, TimerScheduler<QueueManagerActor.Message> timers) {
+    private QueueManagerActor(ActorContext<Message> context) {
         super(context);
-        wiedergabe = new ArrayList<>();
-
+        this.playlist = new LinkedList<>();
+        this.singers = new LinkedList<>();
     }
 
     @Override
-    public Receive<QueueManagerActor.Message> createReceive() {
+    public Receive<Message> createReceive() {
         return newReceiveBuilder()
-                .onMessage(QueueManagerActor.ReadyMessage.class, this::onReadyMessage)
-                .onMessage(QueueManagerActor.AddMessage.class, this::onAddMessage)
+                .onMessage(StartMessage.class, this::onStartMessage)
+                .onMessage(ReadyMessage.class, this::onReadyMessage)
+                .onMessage(AddMessage.class, this::onAddMessage)
                 .build();
     }
 
+    private Behavior<Message> onStartMessage(StartMessage msg) {
+        this.playback = msg.playback;
+        return this;
+    }
+
     private Behavior<Message> onReadyMessage(ReadyMessage msg) {
-        getContext().getLog().info("");
+        if (!this.playlist.isEmpty()) {
+            String firstSong = playlist.poll();
+            ActorRef<KaraokeSingerActor.Message> singer = singers.poll();
+            playback.tell(new PlaybackClientActor.PlayMessage(firstSong, singer));
+        }
         return this;
     }
 
     private Behavior<Message> onAddMessage(AddMessage msg) {
-        getContext().getLog().info("");
+        if (!this.playlist.isEmpty()) {
+            playlist.add(msg.songName);
+            singers.add(msg.singer);
+            this.getContext().getLog().info("QueueManager added '" + msg.songName + "' to Queue.");
+        } else {
+            playback.tell(new PlaybackClientActor.PlayMessage(msg.songName, msg.singer));
+            this.getContext().getLog().info("QueueManger sent '"+ msg.songName + "' to PlaybackClient.");
+        }
         return this;
     }
 }

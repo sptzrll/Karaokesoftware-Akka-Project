@@ -13,6 +13,7 @@ public class PlaybackClientActor extends AbstractBehavior<PlaybackClientActor.Me
     public interface Message {}
     public record GetList(List<Song> songList) implements Message{}
     public record PlayMessage(String songName, ActorRef<KaraokeSingerActor.Message> singer) implements Message { }
+    public enum sendReadyMessage implements Message { INSTANCE }
 
     public static Behavior<Message> create(ActorRef<QueueManagerActor.Message> queueManager) {
         return Behaviors.setup(context -> Behaviors.withTimers(timers -> new PlaybackClientActor(context, timers, queueManager)));
@@ -26,8 +27,8 @@ public class PlaybackClientActor extends AbstractBehavior<PlaybackClientActor.Me
         super(context);
         this.timers = timers;
         this.queueManager = queueManager;
-//        Message msg = new PlayMessage("", "song", 10);
-//        this.timers.startSingleTimer(msg, msg, Duration.ofSeconds(10));
+        queueManager.tell(new QueueManagerActor.ReadyMessage("Ready"));
+        //this.getContext().getLog().info("Ready");
     }
 
     @Override
@@ -35,6 +36,7 @@ public class PlaybackClientActor extends AbstractBehavior<PlaybackClientActor.Me
         return newReceiveBuilder()
                 .onMessage(GetList.class, this::onGetList)
                 .onMessage(PlayMessage.class, this::onPlayMessage)
+                .onMessage(sendReadyMessage.class, this::onSendReadyMessage)
                 .build();
     }
 
@@ -44,22 +46,22 @@ public class PlaybackClientActor extends AbstractBehavior<PlaybackClientActor.Me
     }
 
     private Behavior<Message> onPlayMessage(PlayMessage msg) {
-        try {
-            int duration = 0;
-            for (Song song: songList) {
-                if(song.getTitle().equals(msg.songName)){
-                    duration = song.getDuration();
-                    msg.singer.tell(new KaraokeSingerActor.StartSingingMessage(song.getArtistName(), song.getTitle(), song.getDuration()));
-                    break;
-                }
+
+        int duration = 0;
+        for (Song song: songList) {
+            if(song.getTitle().equals(msg.songName)){
+                duration = song.getDuration();
+                msg.singer.tell(new KaraokeSingerActor.StartSingingMessage(song.getArtistName(), song.getTitle(), song.getDuration()));
+                break;
             }
-            Thread.sleep(duration);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
         }
-
+        //Nach dem Ablauf des Timers sendet der Timer eine onSendReadyMessage an den PlaybackClient
+        timers.startSingleTimer("Song is playing...", sendReadyMessage.INSTANCE, Duration.ofSeconds(duration));
         this.getContext().getLog().info("Done");
-
+        return this;
+    }
+    //wird ausgeführt nach dem Ablauf des Timers
+    private Behavior<Message> onSendReadyMessage(sendReadyMessage msg) {
         queueManager.tell(new QueueManagerActor.ReadyMessage("Ready"));
         return this;
     }

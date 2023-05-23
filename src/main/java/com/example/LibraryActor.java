@@ -66,7 +66,8 @@ public class LibraryActor extends AbstractBehavior<LibraryActor.Message> {
         }
 
         msg.singer.tell(new KaraokeSingerActor.ArtistsMessage(artistsList));
-        this.getContext().getLog().info(String.format("Library sent artistList to Singer %d: %s", msg.singerNumber, artistsList));
+        //Logausgabe
+        //this.getContext().getLog().info(String.format("Library sent artistList to Singer %d: %s", msg.singerNumber, artistsList));
         return this;
     }
 
@@ -79,7 +80,8 @@ public class LibraryActor extends AbstractBehavior<LibraryActor.Message> {
             }
         }
         msg.singer.tell(new KaraokeSingerActor.SongsMessage(songsList));
-        this.getContext().getLog().info(String.format("Library sent songsList to Singer :%s", songsList));
+        // Logausgabe
+        //this.getContext().getLog().info(String.format("Library sent songsList to Singer :%s", songsList));
         return this;
     }
 }

@@ -13,7 +13,7 @@ public class SpawnerActor extends AbstractBehavior<SpawnerActor.Message> {
     private final TimerScheduler<SpawnerActor.Message> timers;
     private static ActorRef<QueueManagerActor.Message> queueManager;
     private static ActorRef<LibraryActor.Message> library;
-    private ActorRef<PlaybackClientActor.Message> playback;
+    private final ActorRef<PlaybackClientActor.Message> playback;
     private final Random random;
     private final long minTime;
     private final long maxTime;
@@ -38,8 +38,8 @@ public class SpawnerActor extends AbstractBehavior<SpawnerActor.Message> {
         super(context);
         this.timers = timers;
         this.random = new Random();
-        this.queueManager = queueManager;
-        this.library = library;
+        SpawnerActor.queueManager = queueManager;
+        SpawnerActor.library = library;
         this.playback = playback;
 
         this.minTime = 2;
@@ -57,8 +57,8 @@ public class SpawnerActor extends AbstractBehavior<SpawnerActor.Message> {
     }
 
     private Behavior<Message> onCreateSingerMessage(CreateSingerMessage msg) {
-        ActorRef<KaraokeSingerActor.Message> singer = this.getContext().spawn(KaraokeSingerActor.create(queueManager, library, playback, singerNumber), String.format("singer%d", singerNumber));
-        this.getContext().getLog().info(String.format("Singer %d was created.", singerNumber));
+        ActorRef<KaraokeSingerActor.Message> singer = this.getContext().spawn(KaraokeSingerActor.create(queueManager, library, singerNumber), String.format("singer%d", singerNumber));
+        //this.getContext().getLog().info(String.format("Singer %d was created.", singerNumber));
         library.tell(new LibraryActor.ListArtistsMessage(singer, singerNumber));
         singerNumber++;
         createRandomDuration(this.minTime, this.maxTime);

@@ -1,3 +1,8 @@
+// Alla Spitzer 222114
+// Olha Borysova 230606
+// Anastasiia Kulyani 230612
+// Dmytro Pahuba 230665
+
 package com.example;
 
 import akka.actor.typed.ActorRef;
@@ -31,7 +36,7 @@ public class LibraryActor extends AbstractBehavior<LibraryActor.Message> {
 
         songs.add(new Song("Bad Bunny", "Diles", 10));
         songs.add(new Song("Bad Bunny", "Soy Peor", 9));
-        songs.add(new Song("Bad Bunny", "I Like It", 18));
+        songs.add(new Song("Bad Bunny", "I Like It", 8));
 
         songs.add(new Song("Ed Sheeran", "Thinking Out Loud", 10));
         songs.add(new Song("Ed Sheeran", "Perfect", 9));
@@ -50,12 +55,14 @@ public class LibraryActor extends AbstractBehavior<LibraryActor.Message> {
                 .onMessage(ListArtistsMessage.class, this::onListArtistsMessage)
                 .build();
     }
-
+    // Übergabe der Liste von Lieder auf den PlaybackClient beim Start
     private Behavior<Message> onStart(Start msg) {
         msg.playback.tell(new PlaybackClientActor.GetList(songs));
         return this;
     }
-
+    /*
+     *  Sendet die Liste aller Artist an den KaraokeSinger
+     */
     private Behavior<Message> onListArtistsMessage(ListArtistsMessage msg) {
         ArrayList<String> artistsList = new ArrayList<>();
 
@@ -67,10 +74,12 @@ public class LibraryActor extends AbstractBehavior<LibraryActor.Message> {
 
         msg.singer.tell(new KaraokeSingerActor.ArtistsMessage(artistsList));
         //Logausgabe
-        //this.getContext().getLog().info(String.format("Library sent artistList to Singer %d: %s", msg.singerNumber, artistsList));
+        this.getContext().getLog().info(String.format("Library sent artistList to Singer %d: %s", msg.singerNumber, artistsList));
         return this;
     }
-
+    /*
+     *  Sendet die Liste aller Lieder eines ausgewählten Artists an den KaraokeSinger
+     */
     private Behavior<Message> onGetSongsMessage(GetSongsMessage msg) {
         ArrayList<String> songsList = new ArrayList<>();
 
@@ -81,7 +90,7 @@ public class LibraryActor extends AbstractBehavior<LibraryActor.Message> {
         }
         msg.singer.tell(new KaraokeSingerActor.SongsMessage(songsList));
         // Logausgabe
-        //this.getContext().getLog().info(String.format("Library sent songsList to Singer :%s", songsList));
+        this.getContext().getLog().info(String.format("Library sent songsList to Singer :%s", songsList));
         return this;
     }
 }

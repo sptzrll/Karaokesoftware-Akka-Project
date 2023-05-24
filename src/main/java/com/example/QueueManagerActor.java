@@ -1,3 +1,8 @@
+// Alla Spitzer 222114
+// Olha Borysova 230606
+// Anastasiia Kulyani 230612
+// Dmytro Pahuba 230665
+
 package com.example;
 
 import akka.actor.typed.ActorRef;
@@ -43,11 +48,13 @@ public class QueueManagerActor extends AbstractBehavior<QueueManagerActor.Messag
                 .build();
     }
 
+    // liefert die Referenz von dem PlaybackClient
     private Behavior<Message> onStartMessage(StartMessage msg) {
         this.playback = msg.playback;
         return this;
     }
 
+    // sendet den nächsten Song aus der Warteschlange an den PlaybackClient
     private Behavior<Message> onReadyMessage(ReadyMessage msg) {
         playbackIsReady = true;
         if (!this.playlist.isEmpty()) {
@@ -59,17 +66,18 @@ public class QueueManagerActor extends AbstractBehavior<QueueManagerActor.Messag
         return this;
     }
 
+    // fügt den von KaraokeSinger ausgewählten Song in die Warteschlange ein oder sendet ihn an den PlaybackClient
     private Behavior<Message> onAddMessage(AddMessage msg) {
 
         if(!playbackIsReady){
             playlist.add(msg.songName);
             singers.add(msg.singer);
             //Logausgabe
-            //this.getContext().getLog().info("QueueManager added '" + msg.songName + "' to Queue.");
+            this.getContext().getLog().info("QueueManager added '" + msg.songName + "' to Queue.");
         } else{
             playbackIsReady = false;
             //Logausgabe
-            //this.getContext().getLog().info("QueueManger sent '"+ msg.songName + "' to PlaybackClient.");
+            this.getContext().getLog().info("QueueManger sent '"+ msg.songName + "' to PlaybackClient.");
             playback.tell(new PlaybackClientActor.PlayMessage(msg.songName, msg.singer));
         }
         return this;

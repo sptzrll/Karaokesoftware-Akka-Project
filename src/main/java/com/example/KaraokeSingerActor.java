@@ -1,3 +1,8 @@
+// Alla Spitzer 222114
+// Olha Borysova 230606
+// Anastasiia Kulyani 230612
+// Dmytro Pahuba 230665
+
 package com.example;
 
 import akka.actor.typed.ActorRef;
@@ -55,24 +60,30 @@ public class KaraokeSingerActor extends AbstractBehavior<KaraokeSingerActor.Mess
                 .build();
     }
 
+    // sendet einen zufälligen Artist an die Library
     private Behavior<Message> onArtistsMessage(ArtistsMessage msg) {
         int randomArtistIndex = random.nextInt(((msg.artistsList.size())));
         library.tell(new LibraryActor.GetSongsMessage(this.getContext().getSelf(), msg.artistsList.get(randomArtistIndex), singerNumber));
-        //this.getContext().getLog().info(String.format("Singer %d chose %s", singerNumber, msg.artistsList.get(randomArtistIndex)));
+        this.getContext().getLog().info(String.format("Singer %d chose %s", singerNumber, msg.artistsList.get(randomArtistIndex)));
         return this;
     }
+
+    // sendet einen zufälligen Song an die Library
     private Behavior<Message> onSongsMessage(SongsMessage msg) {
         int randomSongIndex = random.nextInt(msg.songsList.size());
         queueManager.tell(new QueueManagerActor.AddMessage(this.getContext().getSelf(), msg.songsList.get(randomSongIndex), singerNumber));
-        //this.getContext().getLog().info(String.format("Singer %d chose '%s'", singerNumber, msg.songsList.get(randomSongIndex)));
+        this.getContext().getLog().info(String.format("Singer %d chose '%s'", singerNumber, msg.songsList.get(randomSongIndex)));
         return this;
     }
+
+    // setzt einen Timer und simuliert das Abspielen eines Songs
     private Behavior<Message> onStartSingingMessage(StartSingingMessage msg) {
         this.getContext().getLog().info(String.format("Singer %d starts singing: %s - '%s' for %d seconds", singerNumber, msg.artistName, msg.title, msg.duration));
         timers.startSingleTimer("Singer is singing...", sendListArtistsMessage.INSTANCE, Duration.ofSeconds(msg.duration));
         return this;
     }
 
+    // sendet eine Anfrage auf die Liste von Artists an die Library
     private Behavior<Message> onSendListArtists(sendListArtistsMessage msg) {
         library.tell(new LibraryActor.ListArtistsMessage(this.getContext().getSelf(), singerNumber));
         return this;

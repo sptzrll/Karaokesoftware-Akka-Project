@@ -1,3 +1,8 @@
+// Alla Spitzer 222114
+// Olha Borysova 230606
+// Anastasiia Kulyani 230612
+// Dmytro Pahuba 230665
+
 package com.example;
 
 import akka.actor.typed.ActorRef;
@@ -11,7 +16,9 @@ import java.util.List;
 public class PlaybackClientActor extends AbstractBehavior<PlaybackClientActor.Message> {
 
     public interface Message {}
+
     public record GetList(List<Song> songList) implements Message{}
+
     public record PlayMessage(String songName, ActorRef<KaraokeSingerActor.Message> singer) implements Message { }
     public enum sendReadyMessage implements Message { INSTANCE }
 
@@ -28,7 +35,7 @@ public class PlaybackClientActor extends AbstractBehavior<PlaybackClientActor.Me
         this.timers = timers;
         this.queueManager = queueManager;
         queueManager.tell(new QueueManagerActor.ReadyMessage("Ready"));
-        //this.getContext().getLog().info("Ready");
+        this.getContext().getLog().info("Ready");
     }
 
     @Override
@@ -40,11 +47,17 @@ public class PlaybackClientActor extends AbstractBehavior<PlaybackClientActor.Me
                 .build();
     }
 
+    /*
+     *  liefert eine Liste mit allen Songs
+     */
     private Behavior<Message> onGetList(GetList msg) {
         this.songList = msg.songList;
         return this;
     }
 
+    /*
+     *   sendet eine StartSinging-Nachricht an den KaraokeSinger, setzt einen Timer und simuliert das Abspielen eines Songs
+     */
     private Behavior<Message> onPlayMessage(PlayMessage msg) {
 
         int duration = 0;
@@ -60,7 +73,9 @@ public class PlaybackClientActor extends AbstractBehavior<PlaybackClientActor.Me
         this.getContext().getLog().info("Done");
         return this;
     }
-    //wird ausgeführt nach dem Ablauf des Timers
+    /*
+     *   sendet eine Ready-Nachricht an den QueueClient
+     */
     private Behavior<Message> onSendReadyMessage(sendReadyMessage msg) {
         queueManager.tell(new QueueManagerActor.ReadyMessage("Ready"));
         return this;

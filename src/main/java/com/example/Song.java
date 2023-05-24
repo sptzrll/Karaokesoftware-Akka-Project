@@ -1,5 +1,13 @@
+// Alla Spitzer 222114
+// Olha Borysova 230606
+// Anastasiia Kulyani 230612
+// Dmytro Pahuba 230665
+
 package com.example;
 
+/*
+    Klasse Song wird zur Verwaltung von vorgestellten Daten verwendet
+ */
 public class Song {
 
     private final String artistName;
